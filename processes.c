@@ -50,16 +50,17 @@ int main(int argc, char *argv[]){			//Main
 				fclose(fp);
 				return 1;
 			}
-			//printf("Child Process %d Processing Line #%d: From %s with a Maximum of %d Seconds\n", getpid(), lineNumber, url, seconds);
-			sleep(seconds); //Sleep for Specified Amount of Seconds (if provided)
-			printf("Child Process %d Processing Line #%d: Process Complete\n", getpid(), lineNumber);  //Print Statement(s) Regarding Processing
-			
-			free(line);	//Free Inside Child Process
-			fclose(fp);	//Close the File
-			return 0;
+			char seconds_array[32];						//Array to store the Max Seconds
+			snprintf(seconds_array, sizeof(seconds_array), "%d", seconds);	//Store the Value of Seconds Provided by the File
+			char* curlargs[] = {"curl", "-m", seconds_array, "-o", fileName, "-s", url, NULL};  //Arguments for curl to be Passed into exec
+			execvp("curl", curlargs);	//execvp for curl Call
+			perror("execvp");		//perror for if execvp Fails
+			exit(1);
 		} else {					//Parent Process
-			printf("From Parent Process: Child Process %d Started Processing Line #%d\n", (int)pid, lineNumber); //make sure to fix the print statements, should be parent processes printing
-			processes++;   //Increment the Number of Processes
+			printf("From Parent Process: Child Process %d Started Processing Line #%d\n", (int)pid, lineNumber); //Print Statement(s) Regarding Processing
+			processes++;   											     //Increment the Number of Processes
+			waitpid(pid, NULL, 0);										     //Wait for the Child Process to Complete
+			printf("Child Process %d Processing Line #%d: Process Complete\n", getpid(), lineNumber);  
 		}
 	} 
 	while (wait(NULL) > 0){   //Loop that Waits for the Child Processes to Terminate
